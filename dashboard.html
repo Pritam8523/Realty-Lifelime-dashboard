@@ -5,109 +5,156 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Agent Performance Dashboard</title>
   <style>
+    /* =====================  DARK THEME on PURPLE GRADIENT  ===================== */
     :root{
       --card:#1b1d36; --text:#ffffff; --muted:rgba(255,255,255,.80);
       --border:rgba(255,255,255,.10); --ok:#20c997; --err:#ff6b6b;
+      --thead:#13142c;
+      --totalsA:rgba(255,255,255,.06); --totalsB:rgba(255,255,255,.08);
+      --primary:#ffffff; --primaryText:#2e2a8f;
+
+      /* Background stays gradient */
+      --bg-gradient:
+        radial-gradient(1200px 800px at 20% 20%, #6c5cd7 0%, rgba(108,92,215,.85) 30%, rgba(92,76,196,.85) 55%, rgba(78,62,178,.9) 75%, #4e3eb2 100%),
+        linear-gradient(180deg, #5c4cc8 0%, #4b3aa6 100%);
     }
     *{ box-sizing:border-box; }
-    body{ margin:0; font-family:system-ui, Arial, sans-serif; color:var(--text); background:#0f1020; min-height:100vh; }
+    body{
+      margin:0; font-family:system-ui, Arial, sans-serif; color:var(--text);
+      background:var(--bg-gradient); background-attachment:fixed; min-height:100vh;
+    }
 
+    /* Header (dark) */
     header{
-      display:flex; align-items:center; gap:12px; padding:16px 24px;
-      background:rgba(27,29,54,.90); border-bottom:1px solid var(--border);
+      display:flex; align-items:center; gap:12px; padding:12px 16px;
+      background:rgba(27,29,54,.92); border-bottom:1px solid var(--border);
       position:sticky; top:0; z-index:5; backdrop-filter: blur(6px);
     }
-    header img{ height:34px; width:auto; object-fit:contain; }
-    header h1{ margin:0; font-size:18px; font-weight:600; }
+    .brand-logo{ height:32px; width:auto; object-fit:contain; }
+    header h1{ margin:0; font-size:18px; font-weight:700; }
+    .hdr-actions{ margin-left:auto; display:flex; gap:8px; }
+    .btn{
+      padding:8px 12px; border-radius:10px; border:1px solid var(--border);
+      background:#0f1129; color:#fff; font-weight:700; cursor:pointer; text-decoration:none;
+    }
+    .btn.primary{ background:var(--primary); color:var(--primaryText); border-color:transparent; }
 
-    .wrap{ width: clamp(1024px, 96vw, 1600px); margin:0 auto; padding:0 8px 24px; }
-    .top-actions{ padding:16px 0 12px; }
-    a.btn{ display:inline-block; padding:10px 16px; background:#fff; color:#2e2a8f; border-radius:10px; text-decoration:none; font-weight:700; }
+    .wrap{ width: clamp(1024px, 96vw, 1600px); margin:0 auto; padding:0 8px 16px; }
+    .top-actions{ padding:12px 16px 8px; }
+    .back-link{ background:var(--primary); color:var(--primaryText); border-color:transparent; }
 
-    /* Top filters */
-    .filters{ display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:20px; align-items:stretch; }
+    /* Filters + boxes (dark) */
+    .filters{ display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:16px; }
     .box{
-      background:rgba(27,29,54,.92); border:1px solid var(--border); border-radius:16px;
-      padding:18px; display:flex; flex-direction:column; gap:12px; backdrop-filter: blur(4px);
+      background:rgba(27,29,54,.92); border:1px solid var(--border); border-radius:12px;
+      padding:14px; display:flex; flex-direction:column; gap:10px; backdrop-filter: blur(4px);
     }
-    .box h3{ margin:0; font-size:16px; font-weight:600; }
-    .hint{ font-size:13px; color:var(--muted); margin-top:-6px; }
+    .box h3{ margin:0; font-size:14px; font-weight:700; }
+    .hint{ font-size:12px; color:var(--muted); margin-top:-4px; }
     .field{
-      background:#0f1129; border:1px solid var(--border); border-radius:12px;
-      padding:10px 12px; display:flex; align-items:center; gap:10px; position:relative;
+      background:#0f1129; border:1px solid var(--border); border-radius:10px;
+      padding:8px 10px; display:flex; align-items:center; gap:8px; position:relative;
     }
-    label{ font-size:14px; color:var(--muted); white-space:nowrap; }
-    select, input[type="text"]{ flex:1; background:transparent; color:#fff; border:none; outline:none; font-size:15px; min-width:0; }
-    .toolbar{ display:grid; grid-template-columns: 1fr 110px; gap:10px; align-items:center; }
-    .btn-reset{ padding:10px 12px; border-radius:12px; border:1px solid var(--border); background:#0f1129; color:#fff; cursor:pointer; }
+    label{ font-size:13px; color:var(--muted); white-space:nowrap; }
+    select, input[type="text"]{ flex:1; background:transparent; color:#fff; border:none; outline:none; font-size:14px; min-width:0; }
+    .toolbar{ display:grid; grid-template-columns: 1fr 100px; gap:8px; align-items:center; }
 
-    /* Autocomplete dropdown */
+    /* Autocomplete */
     .ac-wrap{ position:relative; }
     .ac-list{
       position:absolute; left:0; right:0; top:calc(100% + 6px);
-      background:#0f1129; border:1px solid var(--border); border-radius:12px;
+      background:#0f1129; border:1px solid var(--border); border-radius:10px;
       box-shadow:0 12px 32px rgba(0,0,0,.45); max-height:260px; overflow:auto; z-index:10; display:none;
     }
     .ac-list.open{ display:block; }
-    .ac-item{ padding:10px 12px; font-weight:600; cursor:pointer; user-select:none; border-bottom:1px solid rgba(255,255,255,.05); }
+    .ac-item{ padding:8px 10px; font-weight:600; cursor:pointer; user-select:none; border-bottom:1px solid rgba(255,255,255,.05); }
     .ac-item:last-child{ border-bottom:none; }
     .ac-item:hover,.ac-item.active{ background:#1a1d3b; }
-    .ac-empty{ padding:10px 12px; color:var(--muted); }
+    .ac-empty{ padding:8px 10px; color:var(--muted); }
 
     /* Details */
-    .detail-list{ display:grid; grid-template-columns: 140px 1fr; gap:8px 12px; }
-    .d-label{ color:var(--muted); font-size:13px; }
-    .d-value{ font-weight:600; }
-    .badge{
-      display:inline-block; padding:4px 10px; border-radius:999px; font-weight:700; font-size:12px; border:1px solid var(--border);
-    }
+    .detail-list{ display:grid; grid-template-columns: 160px 1fr; gap:6px 10px; }
+    .d-label{ color:var(--muted); font-size:12px; }
+    .d-value{ font-weight:700; font-size:13px; }
+    .badge{ display:inline-block; padding:3px 8px; border-radius:999px; font-weight:700; font-size:11px; border:1px solid var(--border); }
     .badge.ok{ background:rgba(32,201,151,.15); color:#b3ffe8; border-color:rgba(32,201,151,.35); }
     .badge.err{ background:rgba(255,107,107,.15); color:#ffd4d4; border-color:rgba(255,107,107,.35); }
 
-    /* Table only */
-    .table-section{ margin-top:24px; display:none; }
-    .table-card{ background:rgba(27,29,54,.92); border:1px solid var(--border); border-radius:16px; padding:16px; }
-    .table-title{ margin:0 0 12px; font-size:16px; font-weight:700; }
+    /* Tables */
+    .table-section{ margin-top:16px; display:none; }
+    .table-card{ background:rgba(27,29,54,.92); border:1px solid var(--border); border-radius:12px; padding:12px; }
+    .table-title{ margin:0 0 8px; font-size:14px; font-weight:800; }
     .table-wrap{ overflow:auto; }
     table{ width:100%; border-collapse:separate; border-spacing:0; min-width:1180px; }
     thead th{
-      position:sticky; top:0; background:#13142c; color:#fff; text-align:left; padding:10px 12px;
-      border-bottom:1px solid var(--border); z-index:3;
+      position:sticky; top:0; background:var(--thead); color:#fff; text-align:left; padding:10px 12px;
+      border-bottom:1px solid var(--border); z-index:3; font-size:13px;
     }
-    tbody td{ padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.06); color:#e9e9f3; }
+    tbody td{ padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.06); color:#e9e9f3; font-size:13px; }
     tbody tr:hover{ background:rgba(255,255,255,.03); }
     .num{ text-align:right; white-space:nowrap; }
     .muted{ color:var(--muted); }
-
-    /* Sticky highlighted totals row (just under header) */
     .totals-row td{
-      position:sticky; top:40px; /* adjust if thead height changes */
-      background:linear-gradient(0deg, rgba(255,255,255,.06), rgba(255,255,255,.08));
+      position:sticky; top:42px;
+      background:linear-gradient(0deg, var(--totalsA), var(--totalsB));
       font-weight:800; z-index:2; border-bottom-color:rgba(255,255,255,.18);
     }
-
-    /* Surplus/Deficit colors */
+    .pill{ display:inline-block; padding:4px 10px; border-radius:999px; font-weight:700; font-size:11px; border:1px solid var(--border); }
+    .pill.confirmed{ background:rgba(32,201,151,.15); color:#b3ffe8; border-color:rgba(32,201,151,.35); }
+    .pill.not-confirmed{ background:rgba(255,193,7,.15); color:#ffe9b3; border-color:rgba(255,193,7,.35); }
+    .pill.cancelled{ background:rgba(255,107,107,.15); color:#ffd4d4; border-color:rgba(255,107,107,.35); }
+    th[data-sort]{ cursor:pointer; user-select:none; }
+    th[data-sort]::after{ content:' ⇅'; opacity:.35; }
+    th.sorted-asc::after{ content:' ▲'; opacity:.9; }
+    th.sorted-desc::after{ content:' ▼'; opacity:.9; }
     .surplus{ color:#a8f0c6; font-weight:700; }
     .deficit{ color:#ffb3b3; font-weight:700; }
+
+    /* PRINT */
+    @page{ size:A4; margin:10mm; }
+    @media print{
+      body{ -webkit-print-color-adjust:exact; print-color-adjust:exact; background:#fff; color:#000; }
+      header{ position:static; background:#fff; color:#000; border-bottom:1px solid #ccc; }
+      header h1{ color:#000; }
+      .top-actions,.hdr-actions{ display:none !important; }
+      .wrap{ width:auto; padding:0; }
+      .filters{ display:none; }
+      .table-section{ margin-top:8px; }
+      .table-card{ background:#fff; border:1px solid #ddd; padding:8px; break-inside:auto; }
+      .table-title{ color:#000; margin-bottom:6px; font-size:13px; }
+      .table-wrap{ overflow:visible !important; }
+      thead th{ position:static; background:#f6f6f6; color:#000; border-bottom:1px solid #ccc; }
+      thead{ display:table-header-group; }
+      tfoot{ display:table-row-group; }
+      tr, td, th{ page-break-inside:avoid; }
+      td, th{ padding:6px 8px; font-size:11.5px; }
+      .totals-row td{ position:static; background:#eee; }
+      .pill{ border:1px solid #999 !important; background:#fafafa !important; color:#000 !important; }
+      .surplus, .deficit{ color:#000 !important; }
+    }
 
     @media (max-width:1200px){ .filters{ grid-template-columns: repeat(2, minmax(0,1fr)); } }
     @media (max-width:640px){ .filters{ grid-template-columns:1fr; } .detail-list{ grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
+  <!-- Header -->
   <header>
-    <img src="logo.png" alt="Realty Assistant logo" />
+    <img class="brand-logo" src="logo.png" alt="Realty Assistant logo" />
     <h1>Agent Performance Dashboard</h1>
+    <div class="hdr-actions">
+      <button class="btn" id="btnExport">⬇️ Export (Excel/CSV)</button>
+      <button class="btn primary" id="btnPrint">🖨️ Print</button>
+    </div>
   </header>
 
   <div class="wrap">
     <div class="top-actions">
-      <a class="btn" href="index.html">← Back to Welcome</a>
+      <a class="btn back-link" href="index.html">← Back to Welcome</a>
     </div>
 
     <!-- Filters -->
     <section class="filters">
-      <!-- Role -->
       <div class="box">
         <h3>Please select Role Type</h3>
         <p class="hint">Role Types: FOS, Team Leader, Area Manager, President</p>
@@ -122,7 +169,6 @@
         </div>
       </div>
 
-      <!-- Name (Search) -->
       <div class="box">
         <h3>Please select or Search Name</h3>
         <p class="hint">Type to search, then press Enter or click</p>
@@ -132,11 +178,10 @@
             <input id="search" type="text" placeholder="Search name..." autocomplete="off" aria-expanded="false" aria-controls="ac-list" />
             <div id="ac-list" class="ac-list" role="listbox" aria-label="Name suggestions"></div>
           </div>
-          <button class="btn-reset" id="resetFilters" type="button">Reset</button>
+          <button class="btn" id="resetFilters" type="button">Reset</button>
         </div>
       </div>
 
-      <!-- Details -->
       <div class="box">
         <h3>Employee Details</h3>
         <div class="detail-list">
@@ -151,12 +196,12 @@
       </div>
     </section>
 
-    <!-- FOS table -->
+    <!-- 1) Monthly Performance -->
     <section id="fosTableSection" class="table-section">
       <div class="table-card">
         <h3 class="table-title">Monthly Performance (FOS)</h3>
         <div class="table-wrap">
-          <table>
+          <table id="tblPerformance">
             <thead>
               <tr>
                 <th>Month</th>
@@ -165,6 +210,7 @@
                 <th class="num">Active Units</th>
                 <th class="num">Salary</th>
                 <th class="num">Marketing Expense</th>
+                <th class="num">Infra</th><!-- NEW -->
                 <th class="num">Revenue</th>
                 <th class="num">Salary × 5</th>
                 <th class="num">X Achieved</th>
@@ -174,53 +220,107 @@
             <tbody id="fosTbody"></tbody>
           </table>
         </div>
-        <p class="muted" id="fosNote" style="margin-top:8px;"></p>
+      </div>
+    </section>
+
+    <!-- 2) Sales Details -->
+    <section id="fosSalesSection" class="table-section">
+      <div class="table-card">
+        <h3 class="table-title">Sales Details (FOS)</h3>
+        <div class="table-wrap">
+          <table id="tblSales">
+            <thead>
+              <tr id="fosSalesHeaders">
+                <th data-sort="date">Booking Date</th>
+                <th data-sort="project">Project</th>
+                <th data-sort="client">Client Name</th>
+                <th data-sort="unit">Unit No.</th>
+                <th data-sort="status">Status</th>
+                <th data-sort="revenue" class="num">Revenue</th>
+                <th data-sort="flag" class="num">Status Flag</th>
+              </tr>
+            </thead>
+            <tbody id="fosSalesBody"></tbody>
+          </table>
+        </div>
+        <p class="muted">Status Flag: Cancelled = 0, otherwise = 1</p>
+      </div>
+    </section>
+
+    <!-- 3) Input Matrix -->
+    <section id="fosMatrixSection" class="table-section">
+      <div class="table-card">
+        <h3 class="table-title">Input Matrix (FOS)</h3>
+        <div class="table-wrap">
+          <table id="tblMatrix">
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th class="num">Total Calls</th>
+                <th class="num">Connected Calls</th>
+                <th class="num">Duration (mins)</th>
+                <th class="num">Site Visits Scheduled</th>
+                <th class="num">Site Visits Done</th>
+                <th class="num">Meetings Scheduled</th>
+                <th class="num">Meetings Done</th>
+                <th class="num">Daily Work (entries)</th>
+              </tr>
+            </thead>
+            <tbody id="fosMatrixBody"></tbody>
+          </table>
+        </div>
       </div>
     </section>
   </div>
 
   <script>
-    /* ===== Employee master ===== */
+    /* ===== Data ===== */
     const employees = {
       "FOS": {
         "A": { city: "Noida",     status: "Active",   doj: "2024-02-10", dol: null,        code: "RA-FOS-001", salary: 30000 },
         "B": { city: "Ghaziabad", status: "Inactive", doj: "2023-05-15", dol: "2024-11-20", code: "RA-FOS-002", salary: 28000 },
         "C": { city: "Lucknow",   status: "Active",   doj: "2024-07-01", dol: null,        code: "RA-FOS-003", salary: 32000 }
-      },
-      "Team Leader": {
-        "D": { city: "Noida",   status: "Active",   doj: "2022-03-05", dol: null,        code: "RA-TL-010", salary: 45000 },
-        "E": { city: "Delhi",   status: "Inactive", doj: "2021-08-20", dol: "2023-12-31", code: "RA-TL-011", salary: 42000 },
-        "F": { city: "Gurgaon", status: "Active",   doj: "2023-11-11", dol: null,        code: "RA-TL-012", salary: 47000 }
-      },
-      "Area Manager": {
-        "G": { city: "Noida",   status: "Active",   doj: "2020-06-15", dol: null,        code: "RA-AM-101", salary: 65000 },
-        "H": { city: "Kanpur",  status: "Inactive", doj: "2019-04-10", dol: "2022-10-05", code: "RA-AM-102", salary: 60000 },
-        "I": { city: "Lucknow", status: "Active",   doj: "2021-01-20", dol: null,        code: "RA-AM-103", salary: 68000 }
-      },
-      "President": {
-        "X": { city: "Noida", status: "Active",   doj: "2016-02-01", dol: null,        code: "RA-PR-901", salary: 150000 },
-        "Y": { city: "Mumbai",status: "Active",   doj: "2018-09-10", dol: null,        code: "RA-PR-902", salary: 155000 },
-        "Z": { city: "Delhi", status: "Inactive", doj: "2015-01-15", dol: "2024-03-31", code: "RA-PR-903", salary: 148000 }
       }
     };
-
-    /* ===== Sample monthly data for FOS ===== */
+    /* ==== Monthly data now includes infra ==== */
     const perfFOS = {
       "A": {
-        "2024-02": { total: 3, cancelled: 1, marketing: 5000, revenue: 90000 },
-        "2024-03": { total: 4, cancelled: 0, marketing: 6000, revenue: 120000 },
-        "2024-04": { total: 2, cancelled: 1, marketing: 4000, revenue: 60000 }
+        "2024-02": { total:3, cancelled:1, marketing:5000, infra:2000, revenue:90000 },
+        "2024-03": { total:4, cancelled:0, marketing:6000, infra:1500, revenue:120000 },
+        "2024-04": { total:2, cancelled:1, marketing:4000, infra:1800, revenue:60000 }
       },
       "B": {
-        "2023-06": { total: 2, cancelled: 0, marketing: 3000, revenue: 70000 },
-        "2023-07": { total: 3, cancelled: 1, marketing: 3500, revenue: 80000 },
-        "2024-10": { total: 1, cancelled: 0, marketing: 2000, revenue: 30000 }
+        "2023-06": { total:2, cancelled:0, marketing:3000, infra:1200, revenue:70000 },
+        "2023-07": { total:3, cancelled:1, marketing:3500, infra:1500, revenue:80000 },
+        "2024-10": { total:1, cancelled:0, marketing:2000, infra:1000, revenue:30000 }
       },
       "C": {
-        "2024-07": { total: 1, cancelled: 0, marketing: 2500, revenue: 35000 },
-        "2024-08": { total: 2, cancelled: 0, marketing: 3000, revenue: 70000 },
-        "2024-09": { total: 3, cancelled: 1, marketing: 3200, revenue: 85000 }
+        "2024-07": { total:1, cancelled:0, marketing:2500, infra:800,  revenue:35000 },
+        "2024-08": { total:2, cancelled:0, marketing:3000, infra:900,  revenue:70000 },
+        "2024-09": { total:3, cancelled:1, marketing:3200, infra:1100, revenue:85000 }
       }
+    };
+    const salesFOS = {
+      "A":[{date:"2024-02-18",project:"Gaur Airocity",client:"Rohit Sharma",unit:"A-1203",status:"Confirmed",revenue:4500000},
+           {date:"2024-03-05",project:"Gaur Aero Mall",client:"Neha Gupta",unit:"K-05",status:"Not Confirmed",revenue:1200000},
+           {date:"2024-04-02",project:"Gaur Airocity",client:"Vikas Verma",unit:"B-807",status:"Cancelled",revenue:0}],
+      "B":[{date:"2023-06-11",project:"Gaur Airocity",client:"Anita Singh",unit:"C-305",status:"Confirmed",revenue:3200000},
+           {date:"2023-07-19",project:"Gaur Aero Mall",client:"Pankaj Jain",unit:"S-12",status:"Cancelled",revenue:0},
+           {date:"2024-10-03",project:"Gaur Airocity",client:"Manish Tiwari",unit:"D-1001",status:"Confirmed",revenue:2800000}],
+      "C":[{date:"2024-07-07",project:"Gaur Airocity",client:"Priya Mishra",unit:"E-209",status:"Confirmed",revenue:2100000},
+           {date:"2024-08-21",project:"Gaur Aero Mall",client:"Arjun Mehta",unit:"M-09",status:"Not Confirmed",revenue:950000},
+           {date:"2024-09-14",project:"Gaur Airocity",client:"Nisha Yadav",unit:"F-1502",status:"Cancelled",revenue:0}]
+    };
+    const matrixFOS = {
+      "A":{"2024-02":{calls:420,connected:180,duration:950,svSched:14,svDone:9,mtgSched:8,mtgDone:5,dailyWork:22},
+           "2024-03":{calls:510,connected:230,duration:1180,svSched:18,svDone:12,mtgSched:11,mtgDone:8,dailyWork:24},
+           "2024-04":{calls:360,connected:140,duration:770,svSched:12,svDone:7,mtgSched:6,mtgDone:4,dailyWork:20}},
+      "B":{"2023-06":{calls:300,connected:120,duration:640,svSched:10,svDone:6,mtgSched:5,mtgDone:3,dailyWork:21},
+           "2023-07":{calls:350,connected:135,duration:720,svSched:11,svDone:6,mtgSched:7,mtgDone:4,dailyWork:23},
+           "2024-10":{calls:180,connected:70,duration:350,svSched:5,svDone:3,mtgSched:3,mtgDone:2,dailyWork:18}},
+      "C":{"2024-07":{calls:200,connected:90,duration:420,svSched:8,svDone:5,mtgSched:4,mtgDone:3,dailyWork:18},
+           "2024-08":{calls:280,connected:120,duration:610,svSched:12,svDone:8,mtgSched:6,mtgDone:4,dailyWork:22},
+           "2024-09":{calls:310,connected:130,duration:690,svSched:13,svDone:9,mtgSched:7,mtgDone:5,dailyWork:24}}
     };
 
     /* ===== Elements ===== */
@@ -239,12 +339,18 @@
 
     const fosSection = document.getElementById('fosTableSection');
     const fosTbody   = document.getElementById('fosTbody');
-    const fosNote    = document.getElementById('fosNote');
 
-    /* ===== State & helpers ===== */
+    const fosSalesSection = document.getElementById('fosSalesSection');
+    const fosSalesBody    = document.getElementById('fosSalesBody');
+
+    const fosMatrixSection = document.getElementById('fosMatrixSection');
+    const fosMatrixBody    = document.getElementById('fosMatrixBody');
+
     let state = { role: roleSel.value, name: null };
     let acIndex = -1;
+    let salesSort = { key: null, asc: true };
 
+    /* ===== Helpers ===== */
     const fmtDate = (iso)=> !iso ? '—' : new Date(iso+"T00:00:00").toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
     const fmtINR  = (n)=> n==null ? '—' : n.toLocaleString('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0});
     const fmtX    = (x)=> isFinite(x) ? (Math.round(x*100)/100).toFixed(2) + '×' : '—';
@@ -252,7 +358,6 @@
     function namesForRole(role){ return Object.keys(employees[role] || []); }
     function filterNames(q){ const list = namesForRole(state.role); if(!q) return list; q=q.toLowerCase(); return list.filter(n=>n.toLowerCase().includes(q)); }
 
-    /* Month range DOJ→DOL (or current month if active) */
     function monthRange(doj, dol){
       const start = new Date(doj.slice(0,7)+"-01T00:00:00");
       const end = dol ? new Date(dol.slice(0,7)+"-01T00:00:00") : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
@@ -287,7 +392,7 @@
     /* ===== Selection + details ===== */
     function selectName(name){
       state.name = name; searchInput.value = name; closeAC();
-      updateDetails(); renderFOSTable();
+      updateDetails(); renderFOSTable(); renderFOSSalesTable(); renderFOSMatrixTable();
     }
 
     function updateDetails(){
@@ -308,10 +413,10 @@
       dSalary.textContent = fmtINR(data.salary);
     }
 
-    /* ===== FOS table render (sticky totals row, factor & surplus/deficit) ===== */
+    /* ===== 1) Monthly Performance (with Infra) ===== */
     function renderFOSTable(){
       if(state.role !== 'FOS' || !state.name){
-        fosSection.style.display = 'none'; fosTbody.innerHTML = ''; fosNote.textContent = ''; return;
+        fosSection.style.display = 'none'; fosTbody.innerHTML = ''; return;
       }
       const emp = employees['FOS'][state.name];
       if(!emp){ fosSection.style.display = 'none'; return; }
@@ -321,21 +426,21 @@
       const salary = emp.salary || 0;
       const perMonthTarget = salary * 5;
 
-      // Totals across months
-      let sumTotal=0, sumCancel=0, sumActive=0, sumMkt=0, sumRevenue=0;
+      let sumTotal=0, sumCancel=0, sumActive=0, sumMkt=0, sumInfra=0, sumRevenue=0;
       months.forEach(m=>{
-        const r = monthly[m.key] || { total:0, cancelled:0, marketing:0, revenue:0 };
+        const r = monthly[m.key] || { total:0, cancelled:0, marketing:0, infra:0, revenue:0 };
         const active = Math.max((r.total||0) - (r.cancelled||0), 0);
         sumTotal += (r.total||0);
         sumCancel+= (r.cancelled||0);
         sumActive+= active;
         sumMkt   += (r.marketing||0);
+        sumInfra += (r.infra||0);
         sumRevenue += (r.revenue||0);
       });
       const monthsCount = months.length;
       const totalSalary = salary * monthsCount;
       const totalTarget = perMonthTarget * monthsCount;
-      const xAchievedTotal = totalTarget ? (sumRevenue / totalTarget) : 0; // factor
+      const xAchievedTotal = totalTarget ? (sumRevenue / totalTarget) : 0;
       const surplusTotal = sumRevenue - totalTarget;
 
       const totalsRow = `
@@ -346,17 +451,17 @@
           <td class="num">${sumActive}</td>
           <td class="num">${fmtINR(totalSalary)}</td>
           <td class="num">${fmtINR(sumMkt)}</td>
+          <td class="num">${fmtINR(sumInfra)}</td>
           <td class="num">${fmtINR(sumRevenue)}</td>
           <td class="num">${fmtINR(totalTarget)}</td>
           <td class="num">${fmtX(xAchievedTotal)}</td>
           <td class="num ${surplusTotal>=0?'surplus':'deficit'}">${surplusTotal>=0?'+':''}${fmtINR(Math.abs(surplusTotal))}</td>
         </tr>`;
 
-      // Month-wise rows
       const monthRows = months.map(m=>{
-        const r = monthly[m.key] || { total:0, cancelled:0, marketing:0, revenue:0 };
+        const r = monthly[m.key] || { total:0, cancelled:0, marketing:0, infra:0, revenue:0 };
         const activeUnits = Math.max((r.total||0) - (r.cancelled||0), 0);
-        const xFactor = perMonthTarget ? ((r.revenue||0)/perMonthTarget) : 0; // factor
+        const xFactor = perMonthTarget ? ((r.revenue||0)/perMonthTarget) : 0;
         const surplus = (r.revenue||0) - perMonthTarget;
 
         return `<tr>
@@ -366,6 +471,7 @@
           <td class="num">${activeUnits}</td>
           <td class="num">${fmtINR(salary)}</td>
           <td class="num">${fmtINR(r.marketing||0)}</td>
+          <td class="num">${fmtINR(r.infra||0)}</td>
           <td class="num">${fmtINR(r.revenue||0)}</td>
           <td class="num">${fmtINR(perMonthTarget)}</td>
           <td class="num">${fmtX(xFactor)}</td>
@@ -374,23 +480,173 @@
       }).join('');
 
       fosTbody.innerHTML = totalsRow + monthRows;
-      fosNote.textContent = ``;
       fosSection.style.display = 'block';
     }
 
-    function resetAll(){ searchInput.value=''; state.name=null; closeAC(); updateDetails(); renderFOSTable(); searchInput.focus(); }
+    /* ===== 2) Sales (sortable) ===== */
+    function flagFromStatus(status){ return status === 'Cancelled' ? 0 : 1; }
+    function getSortableVal(row, key){
+      switch(key){
+        case 'date':    return new Date(row.date).getTime();
+        case 'revenue': return Number(row.revenue) || 0;
+        case 'flag':    return flagFromStatus(row.status);
+        case 'status':  return String(row.status || '').toLowerCase();
+        case 'project': return String(row.project || '').toLowerCase();
+        case 'client':  return String(row.client || '').toLowerCase();
+        case 'unit':    return String(row.unit || '').toLowerCase();
+        default:        return '';
+      }
+    }
+    function sortSales(data, key, asc){
+      return [...data].sort((a,b)=>{
+        const x = getSortableVal(a, key);
+        const y = getSortableVal(b, key);
+        if(x === y) return 0;
+        return asc ? (x > y ? 1 : -1) : (x < y ? 1 : -1);
+      });
+    }
+    function updateSalesHeaderSortIndicators(){
+      const headerRow = document.getElementById('fosSalesHeaders');
+      [...headerRow.children].forEach(th=>{
+        th.classList.remove('sorted-asc','sorted-desc');
+        const k = th.dataset.sort;
+        if(!k) return;
+        if(salesSort.key === k){
+          th.classList.add(salesSort.asc ? 'sorted-asc' : 'sorted-desc');
+        }
+      });
+    }
+    function renderFOSSalesTable(){
+      if(state.role !== 'FOS' || !state.name){
+        fosSalesSection.style.display = 'none'; fosSalesBody.innerHTML = ''; return;
+      }
+      const rows = (salesFOS[state.name] || []);
+      const activeKey = salesSort.key;
+      const sorted = activeKey ? sortSales(rows, activeKey, salesSort.asc) : rows;
 
-    // Init
+      if(!sorted.length){
+        fosSalesBody.innerHTML = `<tr><td colspan="7" class="muted">No sales entries found.</td></tr>`;
+        fosSalesSection.style.display = 'block'; updateSalesHeaderSortIndicators(); return;
+      }
+
+      const trHTML = sorted.map(r=>{
+        const statusClass = r.status === 'Cancelled' ? 'cancelled' : (r.status === 'Confirmed' ? 'confirmed' : 'not-confirmed');
+        const flag = flagFromStatus(r.status);
+        return `<tr>
+          <td>${fmtDate(r.date)}</td>
+          <td>${r.project || '—'}</td>
+          <td>${r.client || '—'}</td>
+          <td>${r.unit || '—'}</td>
+          <td><span class="pill ${statusClass}">${r.status}</span></td>
+          <td class="num">${fmtINR(r.revenue)}</td>
+          <td class="num">${flag}</td>
+        </tr>`;
+      }).join('');
+
+      fosSalesBody.innerHTML = trHTML;
+      fosSalesSection.style.display = 'block';
+      updateSalesHeaderSortIndicators();
+    }
+
+    /* ===== 3) Input Matrix ===== */
+    function renderFOSMatrixTable(){
+      if(state.role !== 'FOS' || !state.name){
+        fosMatrixSection.style.display = 'none'; fosMatrixBody.innerHTML = ''; return;
+      }
+      const emp = employees['FOS'][state.name];
+      if(!emp){ fosMatrixSection.style.display='none'; return; }
+
+      const months = monthRange(emp.doj, emp.dol);
+      const matrix = (matrixFOS[state.name] || {});
+      let tCalls=0, tConn=0, tDur=0, tSvS=0, tSvD=0, tMtS=0, tMtD=0, tDW=0;
+
+      const monthRows = months.map(m=>{
+        const r = matrix[m.key] || { calls:0, connected:0, duration:0, svSched:0, svDone:0, mtgSched:0, mtgDone:0, dailyWork:0 };
+        tCalls += r.calls||0; tConn+= r.connected||0; tDur+= r.duration||0;
+        tSvS += r.svSched||0; tSvD+= r.svDone||0; tMtS+= r.mtgSched||0; tMtD+= r.mtgDone||0; tDW+= r.dailyWork||0;
+
+        return `<tr>
+          <td>${m.label}</td>
+          <td class="num">${r.calls||0}</td>
+          <td class="num">${r.connected||0}</td>
+          <td class="num">${r.duration||0}</td>
+          <td class="num">${r.svSched||0}</td>
+          <td class="num">${r.svDone||0}</td>
+          <td class="num">${r.mtgSched||0}</td>
+          <td class="num">${r.mtgDone||0}</td>
+          <td class="num">${r.dailyWork||0}</td>
+        </tr>`;
+      }).join('');
+
+      const totalsRow = `
+        <tr class="totals-row">
+          <td>Total</td>
+          <td class="num">${tCalls}</td>
+          <td class="num">${tConn}</td>
+          <td class="num">${tDur}</td>
+          <td class="num">${tSvS}</td>
+          <td class="num">${tSvD}</td>
+          <td class="num">${tMtS}</td>
+          <td class="num">${tMtD}</td>
+          <td class="num">${tDW}</td>
+        </tr>`;
+
+      fosMatrixBody.innerHTML = totalsRow + monthRows;
+      fosMatrixSection.style.display = 'block';
+    }
+
+    /* ===== Export (CSV) ===== */
+    function downloadCSV(filename, rows){
+      const csv = rows.map(r=>r.map(v=>{
+        const s = String(v ?? '');
+        if(/[",\n]/.test(s)) return `"${s.replace(/"/g,'""')}"`;
+        return s;
+      }).join(',')).join('\n');
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+    }
+    function tableToRows(table){
+      const rows = [];
+      const ths = table.querySelectorAll('thead th');
+      rows.push(Array.from(ths).map(th=>th.textContent.trim()));
+      const trs = table.querySelectorAll('tbody tr');
+      trs.forEach(tr=>{
+        const tds = Array.from(tr.querySelectorAll('td')).map(td=>td.innerText.trim());
+        rows.push(tds);
+      });
+      return rows;
+    }
+    function doExport(){
+      if(state.role !== 'FOS' || !state.name){
+        alert('Please select FOS and a name first.');
+        return;
+      }
+      const name = state.name;
+      const perfRows  = tableToRows(document.getElementById('tblPerformance'));
+      const salesRows = tableToRows(document.getElementById('tblSales'));
+      const matRows   = tableToRows(document.getElementById('tblMatrix'));
+      downloadCSV(`${name}_Monthly_Performance.csv`, perfRows);
+      downloadCSV(`${name}_Sales_Details.csv`, salesRows);
+      downloadCSV(`${name}_Input_Matrix.csv`, matRows);
+    }
+
+    /* ===== Init & Events ===== */
+    function resetAll(){ searchInput.value=''; state.name=null; closeAC(); updateDetails(); renderFOSTable(); renderFOSSalesTable(); renderFOSMatrixTable(); searchInput.focus(); }
+
     (function init(){
       const first = namesForRole(state.role)[0] || null;
       if(first){ state.name = first; searchInput.value = first; }
-      updateDetails(); renderFOSTable();
+      updateDetails(); renderFOSTable(); renderFOSSalesTable(); renderFOSMatrixTable();
+      document.getElementById('btnExport')?.addEventListener('click', doExport);
+      document.getElementById('btnPrint')?.addEventListener('click', ()=> window.print());
     })();
 
-    // Events
     roleSel.addEventListener('change', e=>{
       state.role=e.target.value; state.name=null; searchInput.value='';
-      closeAC(); updateDetails(); renderFOSTable();
+      closeAC(); updateDetails(); renderFOSTable(); renderFOSSalesTable(); renderFOSMatrixTable();
     });
     searchInput.addEventListener('focus', ()=>{ refreshAC(); });
     searchInput.addEventListener('input', ()=>{ refreshAC(); });
@@ -405,6 +661,15 @@
     });
     document.addEventListener('click', (e)=>{ if(!e.target.closest('.ac-wrap')) closeAC(); });
     resetBtn.addEventListener('click', resetAll);
+
+    document.getElementById('fosSalesHeaders').addEventListener('click', (e)=>{
+      const th = e.target.closest('th');
+      if(!th || !th.dataset.sort) return;
+      const key = th.dataset.sort;
+      if(salesSort.key === key){ salesSort.asc = !salesSort.asc; }
+      else { salesSort.key = key; salesSort.asc = true; }
+      renderFOSSalesTable();
+    });
   </script>
 </body>
 </html>
